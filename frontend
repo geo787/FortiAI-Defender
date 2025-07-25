@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FortiAI-Defender Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .anomaly { color: red; }
+        .alert { background: #ffebee; padding: 10px; margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h1>FortiAI-Defender Dashboard</h1>
+    <p>Monitoring network for threats in real-time. Click "Scan" to check anomalies.</p>
+    <button onclick="fetchData()">Scan Network</button>
+    <div id="result"></div>
+
+    <script>
+        function fetchData() {
+            fetch('/scan')
+                .then(response => response.json())
+                .then(data => {
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = `<p>Anomalies detected: ${data.anomalies}</p>`;
+                    data.responses.forEach(resp => {
+                        resultDiv.innerHTML += `<div class="alert">Blocked IP: ${resp.ip} at ${resp.time}</div>`;
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        // Auto-refresh every 10 seconds
+        setInterval(fetchData, 10000);
+    </script>
+</body>
+</html>
