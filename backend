@@ -1,0 +1,57 @@
+from flask import Flask, jsonify, render_template
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import IsolationForest
+from scapy.all import sniff
+import logging
+import threading
+import queue
+
+app = Flask(__name__)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+packet_queue = queue.Queue()
+anomalies = []
+
+# Simulated FortiGate API
+FORTIGATE_API_TOKEN = "mock-token-123"
+def simulate_block_ip(ip):
+    logging.warning(f"Simulated block of malicious IP: {ip}")
+    return {"status": "blocked", "ip": ip, "time": pd.Timestamp.now().strftime("%H:%M:%S")}
+
+# Packet sniffing
+def process_packet(packet):
+    if packet.haslayer("IP"):
+        src_ip = packet["IP"].src
+        bytes_sent = len(packet)
+        packet_data = {"src_ip": src_ip, "bytes_sent": bytes_sent, "packets": 1}
+        packet_queue.put(packet_data)
+
+# Start sniffing in a separate thread
+def start_sniffing():
+    sniff(filter="ip", prn=process_packet, store=0)
+
+# Anomaly detection
+def detect_anomalies():
+    global anomalies
+    data = []
+    while not packet_queue.empty():
+        data.append(packet_queue.get())
+    if data:
+        df = pd.DataFrame(data)
+        model = IsolationForest(contamination=0.1, random_state=42)
+        features = df[['bytes_sent', 'packets']].fillna(0)
+        if not features.empty:
+            model.fit(features)
+            df['anomaly'] = model.predict(features)
+            anomalies = df[df['anomaly'] == -1]['src_ip'].tolist()
+            for ip in anomalies:
+                simulate_block_ip(ip)
+
+# Routes
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/scan')
+def scan_network():
+    detect
