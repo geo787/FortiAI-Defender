@@ -1,0 +1,27 @@
+Examples: `examples/sample_config.py`
+```python
+import pandas as pd
+import numpy as np
+
+# Generate sample traffic for testing
+def generate_test_traffic():
+    data = {
+        'src_ip': [f"192.168.1.{i}" for i in np.random.randint(1, 255, 100)],
+        'bytes_sent': np.random.randint(100, 10000, 100),
+        'packets': np.random.randint(1, 100, 100)
+    }
+    return pd.DataFrame(data)
+
+# Simulate a system scan
+def simulate_scan():
+    scan_data = {
+        'ip': [f"192.168.1.{i}" for i in np.random.randint(1, 255, 10)],
+        'threat_type': np.random.choice(['malware', 'suspicious', 'clean'], 10),
+        'severity': np.random.choice(['low', 'medium', 'high'], 10)
+    }
+    return pd.DataFrame(scan_data)
+
+if __name__ == "__main__":
+    traffic = generate_test_traffic()
+    scan = simulate_scan()
+    print("Sample traffic and scan data generated. Use in dashboard for testing.")
