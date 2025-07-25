@@ -1,0 +1,23 @@
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+
+def analyze_threats(df):
+    # Enhance anomaly detection with a simple Random Forest classifier
+    if df.empty:
+        return []
+    
+    # Feature engineering
+    df['traffic_ratio'] = df['bytes_sent'] / df['packets'].replace(0, 1)
+    features = df[['bytes_sent', 'packets', 'traffic_ratio']].fillna(0)
+    
+    # Train a basic model (simplified for demo)
+    X = features
+    y = np.where(df['anomaly_score'] == -1, 1, 0)  # Anomaly as target
+    if len(np.unique(y)) > 1:  # Ensure variety for training
+        model = RandomForestClassifier(n_estimators=10, random_state=42)
+        model.fit(X, y)
+        df['threat_score'] = model.predict_proba(X)[:, 1]
+        # Flag high-threat IPs
+        return df[df['threat_score'] > 0.7]['src_ip'].tolist()
+    return df[df['anomaly_score'] == -1]['src_ip'].tolist()  # Fallback to basic anomalies
